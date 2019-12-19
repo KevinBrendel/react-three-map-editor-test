@@ -1,18 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import * as Three from 'three';
-import { OrthographicCamera, WebGLRenderer, CubeCamera } from 'three';
+import { OrthographicCamera, WebGLRenderer } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { ReactReduxContext } from 'react-redux';
+import { Grid, Button } from '@material-ui/core';
 
-interface EditorProps {
-	cameraPosition: Three.Vector3,
-	cameraZoom: number,
-	draw: boolean,
-}
+const Editor: React.FC = () => {
+	let drawPolygonMode = false;
 
-const Editor: React.FC<EditorProps> = (props) => {
-	let canvasElement = {} as HTMLCanvasElement;
-
+	let canvasElement = useRef<HTMLCanvasElement>(null);
 	let material = useRef<Three.MeshBasicMaterial>();
 	let cube = useRef<Three.Mesh>();
 
@@ -21,13 +16,13 @@ const Editor: React.FC<EditorProps> = (props) => {
 
 	useEffect(() => {
 		var scene = new Three.Scene();
-		var camera = new OrthographicCamera(canvasElement.width, - canvasElement.clientWidth, canvasElement.clientHeight, -canvasElement.clientHeight, 1, 1000);
-		camera.position.x = props.cameraPosition.x;
-		camera.position.y = props.cameraPosition.y;
-		camera.position.z = props.cameraPosition.z;
+		let width = canvasElement.current?.clientWidth!;
+		let height = canvasElement.current?.clientHeight!;
+		var camera = new OrthographicCamera(width, - width, height, -height, 1, 1000);
+		camera.position.y = 100;
 		camera.rotation.set(90, 0, 0);
-		camera.zoom = props.cameraZoom;
-		var renderer = new Three.WebGLRenderer({ canvas: canvasElement });
+		camera.zoom = 20;
+		var renderer = new Three.WebGLRenderer({ canvas: canvasElement.current! });
 		renderer.setClearColor("dimgrey")
 		var controls = new OrbitControls(camera, renderer.domElement);
 		controls.mouseButtons = { LEFT: Three.MOUSE.PAN, MIDDLE: Three.MOUSE.DOLLY, RIGHT: Three.MOUSE.PAN };
@@ -35,11 +30,11 @@ const Editor: React.FC<EditorProps> = (props) => {
 		controls.enableRotate = false;
 
 		var geometry = new Three.BoxGeometry(10, 10, 10);
-		material.current = new Three.MeshBasicMaterial({ color: props.draw ? redColor : blueColor });
+		material.current = new Three.MeshBasicMaterial({ color: drawPolygonMode ? redColor : blueColor });
 		cube.current = new Three.Mesh(geometry, material.current);
 		scene.add(cube.current);
 
-		canvasElement.onkeypress = (event: KeyboardEvent) => {
+		canvasElement.current!.onkeypress = (event: KeyboardEvent) => {
 			console.log(event.keyCode);
 		};
 
@@ -52,6 +47,9 @@ const Editor: React.FC<EditorProps> = (props) => {
 				camera.bottom = -canvas.clientHeight;
 				camera.updateProjectionMatrix();
 			}
+
+			material.current!.color = drawPolygonMode ? redColor : blueColor;
+			cube.current!.material = material.current!;
 
 			controls.update();
 
@@ -83,15 +81,22 @@ const Editor: React.FC<EditorProps> = (props) => {
 	}
 
 	return (
-		<ReactReduxContext.Consumer>
-			{({ store }) => {
-				store.subscribe(() => {
-					material.current!.color = store.getState().drawPolygonMode ? redColor : blueColor;
-					cube.current!.material = material.current!;
-				});
-				return <canvas ref={ref => (canvasElement = ref!)} style={{ width: "100%", height: "100%", display: "block" }} />
-			}}
-		</ReactReduxContext.Consumer>
+		<Grid container direction="row" alignItems="stretch" style={{ width: "100%", height: "100%" }}>
+			<Grid item style={{ width: "160px", padding: "8px", backgroundColor: "lightgrey" }}>
+			</Grid>
+			<div style={{ width: "160px", padding: "8px", backgroundColor: "grey" }}>
+				<Grid item container direction="column" alignItems="stretch">
+					<Button variant="contained" onClick={() => {
+						drawPolygonMode = !drawPolygonMode;
+					}}>
+						Polygon
+				</Button>
+				</Grid>
+			</div>
+			<Grid item style={{ flexGrow: 1 }}>
+				<canvas ref={canvasElement} style={{ width: "100%", height: "100%", display: "block" }} />
+			</Grid>
+		</Grid >
 	);
 };
 export default Editor;
