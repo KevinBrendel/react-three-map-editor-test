@@ -59,6 +59,7 @@ const Editor: React.FC = () => {
 			scene.dispose();
 			material.dispose();
 			renderer.dispose();
+			controls.dispose();
 		};
 	}, []);
 
