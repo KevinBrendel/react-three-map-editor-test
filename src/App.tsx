@@ -5,7 +5,7 @@ const App: React.FC = () => {
 	return (
 		<div style={{ height: "100vh" }}>
 			<Editor />
-		</div>
+		</div >
 	);
 }
 
